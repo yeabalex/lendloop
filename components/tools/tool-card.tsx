@@ -16,6 +16,7 @@ export interface ToolItem {
     isTrustedLender: boolean;
   } | null;
   isOwner?: boolean;
+  hasPendingRequest?: boolean;
 }
 
 interface ToolCardProps {
@@ -120,15 +121,21 @@ export function ToolCard({
           {!tool.isOwner && !showOwnerActions && onBorrow && (
             <button
               type="button"
-              disabled={!isAvailable}
+              disabled={!isAvailable || tool.hasPendingRequest}
               onClick={() => onBorrow(tool)}
               className={`flex-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                isAvailable
+                tool.hasPendingRequest
+                  ? "cursor-not-allowed border border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300"
+                  : isAvailable
                   ? "cursor-pointer bg-emerald-600 text-white hover:bg-emerald-500"
                   : "cursor-not-allowed bg-zinc-100 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-500"
               }`}
             >
-              {isAvailable ? "Request to Borrow" : "Currently Borrowed"}
+              {tool.hasPendingRequest
+                ? "Requested (Pending)"
+                : isAvailable
+                ? "Request to Borrow"
+                : "Currently Borrowed"}
             </button>
           )}
 

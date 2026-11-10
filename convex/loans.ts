@@ -11,7 +11,7 @@ import { scheduleLoanWebhook } from "./lib/events";
 async function enrichLoans(ctx: QueryCtx, loans: Doc<"loans">[]) {
   return await Promise.all(
     loans.map(async (loan) => {
-      const [tool, borrower, lender, recentLogs] = await Promise.all([
+      const [tool, borrower, lender, rawLogs] = await Promise.all([
         ctx.db.get(loan.toolId),
         ctx.db.get(loan.borrowerId),
         ctx.db.get(loan.lenderId),
@@ -19,8 +19,12 @@ async function enrichLoans(ctx: QueryCtx, loans: Doc<"loans">[]) {
           .query("automationLogs")
           .withIndex("by_loan", (q) => q.eq("loanId", loan._id))
           .order("desc")
-          .take(5),
+          .take(10),
       ]);
+
+      // Filter out internal intermediate 'dispatched' logs when final 'delivered' logs exist
+      const deliveredOrFailed = rawLogs.filter((log) => log.status !== "dispatched");
+      const recentLogs = (deliveredOrFailed.length > 0 ? deliveredOrFailed : rawLogs).slice(0, 5);
 
       return {
         ...loan,

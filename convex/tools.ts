@@ -47,10 +47,23 @@ export const listAll = query({
             .take(200)
         : await ctx.db.query("tools").order("desc").take(200);
 
-    // Enrich with owner profile details
+    // Enrich with owner profile details and caller's pending request status
     return await Promise.all(
       tools.map(async (tool) => {
-        const owner = await ctx.db.get(tool.ownerId);
+        const [owner, pendingLoan] = await Promise.all([
+          ctx.db.get(tool.ownerId),
+          ctx.db
+            .query("loans")
+            .withIndex("by_tool", (q) => q.eq("toolId", tool._id))
+            .filter((q) =>
+              q.and(
+                q.eq(q.field("borrowerId"), currentUser._id),
+                q.eq(q.field("status"), "pending")
+              )
+            )
+            .first(),
+        ]);
+
         return {
           ...tool,
           owner: owner
@@ -61,6 +74,7 @@ export const listAll = query({
               }
             : null,
           isOwner: currentUser._id === tool.ownerId,
+          hasPendingRequest: Boolean(pendingLoan),
         };
       })
     );
