@@ -8,8 +8,12 @@
  * @module
  */
 
+import type * as http from "../http.js";
 import type * as lib_auth from "../lib/auth.js";
+import type * as lib_events from "../lib/events.js";
+import type * as lib_hmac from "../lib/hmac.js";
 import type * as loans from "../loans.js";
+import type * as n8n from "../n8n.js";
 import type * as tools from "../tools.js";
 import type * as users from "../users.js";
 
@@ -20,8 +24,12 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  http: typeof http;
   "lib/auth": typeof lib_auth;
+  "lib/events": typeof lib_events;
+  "lib/hmac": typeof lib_hmac;
   loans: typeof loans;
+  n8n: typeof n8n;
   tools: typeof tools;
   users: typeof users;
 }>;

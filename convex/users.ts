@@ -1,5 +1,5 @@
 import { ConvexError, v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { env, mutation, query } from "./_generated/server";
 import { getCurrentUser, requireAdmin } from "./lib/auth";
 import { userRoleValidator } from "./schema";
 
@@ -62,7 +62,7 @@ export const syncUser = mutation({
 
     // Determine initial role: first registered user in DB or configured admin email becomes "admin"
     const anyExistingUser = await ctx.db.query("users").first();
-    const configuredAdmins = (process.env.INITIAL_ADMIN_EMAILS ?? "")
+    const configuredAdmins = (env.INITIAL_ADMIN_EMAILS ?? "")
       .split(",")
       .map((e) => e.trim().toLowerCase())
       .filter(Boolean);

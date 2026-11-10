@@ -2,6 +2,7 @@ import { ConvexError, v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import { mutation, type QueryCtx, query } from "./_generated/server";
 import { requireAdmin, requireUser } from "./lib/auth";
+import { scheduleLoanWebhook } from "./lib/events";
 
 /**
  * Shared enrichment helper for loan views (`listMyRequests`, `listIncoming`, `listAllAdmin`).
@@ -175,6 +176,17 @@ export const requestLoan = mutation({
       updatedAt: now,
     });
 
+    await scheduleLoanWebhook(ctx, {
+      event: "request.created",
+      loanId,
+      toolName: tool.name,
+      startDate: args.startDate,
+      endDate: args.endDate,
+      recipientId: tool.ownerId,
+      actorName: borrower.name,
+      timestamp: now,
+    });
+
     return loanId;
   },
 });
@@ -240,6 +252,17 @@ export const approveLoan = mutation({
       updatedAt: now,
     });
 
+    await scheduleLoanWebhook(ctx, {
+      event: "request.approved",
+      loanId: loan._id,
+      toolName: tool.name,
+      startDate: loan.startDate,
+      endDate: loan.endDate,
+      recipientId: loan.borrowerId,
+      actorName: user.name,
+      timestamp: now,
+    });
+
     // Decline other competing pending requests for the same tool
     for await (const other of ctx.db
       .query("loans")
@@ -249,6 +272,17 @@ export const approveLoan = mutation({
           status: "declined",
           declinedAt: now,
           updatedAt: now,
+        });
+
+        await scheduleLoanWebhook(ctx, {
+          event: "request.declined",
+          loanId: other._id,
+          toolName: tool.name,
+          startDate: other.startDate,
+          endDate: other.endDate,
+          recipientId: other.borrowerId,
+          actorName: user.name,
+          timestamp: now,
         });
       }
     }
@@ -294,6 +328,18 @@ export const declineLoan = mutation({
       status: "declined",
       declinedAt: now,
       updatedAt: now,
+    });
+
+    const tool = await ctx.db.get(loan.toolId);
+    await scheduleLoanWebhook(ctx, {
+      event: "request.declined",
+      loanId: loan._id,
+      toolName: tool?.name ?? "Tool",
+      startDate: loan.startDate,
+      endDate: loan.endDate,
+      recipientId: loan.borrowerId,
+      actorName: user.name,
+      timestamp: now,
     });
 
     return loan._id;
@@ -385,6 +431,18 @@ export const markReturned = mutation({
       });
     }
 
+    await scheduleLoanWebhook(ctx, {
+      event: "loan.returned",
+      loanId: loan._id,
+      toolName: tool?.name ?? "Tool",
+      startDate: loan.startDate,
+      endDate: loan.endDate,
+      recipientId: loan.borrowerId,
+      actorName: user.name,
+      timestamp: now,
+    });
+
     return loan._id;
   },
 });
+

@@ -1,6 +1,7 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { assertOwnerOrAdmin, requireUser } from "./lib/auth";
+import { scheduleLoanWebhook } from "./lib/events";
 import { toolCategoryValidator, toolConditionValidator } from "./schema";
 
 /**
@@ -241,6 +242,17 @@ export const remove = mutation({
           status: "declined",
           declinedAt: now,
           updatedAt: now,
+        });
+
+        await scheduleLoanWebhook(ctx, {
+          event: "request.declined",
+          loanId: loan._id,
+          toolName: tool.name,
+          startDate: loan.startDate,
+          endDate: loan.endDate,
+          recipientId: loan.borrowerId,
+          actorName: user.name,
+          timestamp: now,
         });
       }
     }
