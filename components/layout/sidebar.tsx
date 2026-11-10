@@ -16,8 +16,11 @@ const NAV_ITEMS = [
 export function Sidebar() {
   const pathname = usePathname();
   const me = useQuery(api.users.currentUser);
+  const incoming = useQuery(api.loans.listIncoming, me ? {} : "skip");
 
   const isAdmin = me?.role === "admin";
+  const pendingIncomingCount =
+    incoming?.filter((loan) => loan.status === "pending").length ?? 0;
 
   return (
     <aside className="flex w-64 shrink-0 flex-col border-r border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
@@ -36,6 +39,9 @@ export function Sidebar() {
         {NAV_ITEMS.map((item) => {
           const isActive =
             pathname === item.href || pathname.startsWith(`${item.href}/`);
+          const showBadge =
+            item.href === "/incoming-requests" && pendingIncomingCount > 0;
+
           return (
             <Link
               key={item.href}
@@ -47,6 +53,11 @@ export function Sidebar() {
               }`}
             >
               <span>{item.label}</span>
+              {showBadge && (
+                <span className="rounded-full bg-amber-500 px-2 py-0.5 text-[11px] font-semibold text-white">
+                  {pendingIncomingCount}
+                </span>
+              )}
             </Link>
           );
         })}
@@ -104,4 +115,3 @@ export function Sidebar() {
     </aside>
   );
 }
-

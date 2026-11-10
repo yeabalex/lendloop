@@ -90,7 +90,7 @@ export const listAll = query({
   args: {},
   handler: async (ctx) => {
     await requireAdmin(ctx);
-    return await ctx.db.query("users").order("desc").collect();
+    return await ctx.db.query("users").order("desc").take(200);
   },
 });
 

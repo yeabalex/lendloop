@@ -1,6 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { assertOwnerOrAdmin, getCurrentUser, requireUser } from "./lib/auth";
+import { assertOwnerOrAdmin, requireUser } from "./lib/auth";
 import { toolCategoryValidator, toolConditionValidator } from "./schema";
 
 /**
@@ -15,7 +15,7 @@ export const listPublic = query({
       .query("tools")
       .withIndex("by_available", (q) => q.eq("isAvailable", true))
       .order("desc")
-      .collect();
+      .take(100);
 
     return availableTools.map((tool) => ({
       _id: tool._id,
@@ -34,7 +34,7 @@ export const listAll = query({
     category: v.optional(v.union(v.literal("all"), toolCategoryValidator)),
   },
   handler: async (ctx, args) => {
-    const currentUser = await getCurrentUser(ctx);
+    const currentUser = await requireUser(ctx);
 
     const selectedCategory = args.category;
     const tools =
@@ -43,8 +43,8 @@ export const listAll = query({
             .query("tools")
             .withIndex("by_category", (q) => q.eq("category", selectedCategory))
             .order("desc")
-            .collect()
-        : await ctx.db.query("tools").order("desc").collect();
+            .take(200)
+        : await ctx.db.query("tools").order("desc").take(200);
 
     // Enrich with owner profile details
     return await Promise.all(
@@ -59,7 +59,7 @@ export const listAll = query({
                 isTrustedLender: owner.isTrustedLender,
               }
             : null,
-          isOwner: currentUser?._id === tool.ownerId,
+          isOwner: currentUser._id === tool.ownerId,
         };
       })
     );
@@ -78,7 +78,7 @@ export const listMine = query({
       .query("tools")
       .withIndex("by_owner", (q) => q.eq("ownerId", user._id))
       .order("desc")
-      .collect();
+      .take(200);
 
     return tools;
   },
@@ -92,13 +92,14 @@ export const getById = query({
     toolId: v.id("tools"),
   },
   handler: async (ctx, args) => {
+    const currentUser = await requireUser(ctx);
+
     const tool = await ctx.db.get(args.toolId);
     if (!tool) {
       return null;
     }
 
     const owner = await ctx.db.get(tool.ownerId);
-    const currentUser = await getCurrentUser(ctx);
 
     return {
       ...tool,
@@ -109,7 +110,7 @@ export const getById = query({
             isTrustedLender: owner.isTrustedLender,
           }
         : null,
-      isOwner: currentUser?._id === tool.ownerId,
+      isOwner: currentUser._id === tool.ownerId,
     };
   },
 });
@@ -223,18 +224,25 @@ export const remove = mutation({
     // Role check: Admin can remove any listing; user can only remove their own
     assertOwnerOrAdmin(user, tool.ownerId, "tool listing");
 
-    // Check if there are active loans currently out for this tool
-    const activeLoan = await ctx.db
+    // Check for active or pending loans on this tool
+    const now = Date.now();
+    for await (const loan of ctx.db
       .query("loans")
-      .withIndex("by_tool", (q) => q.eq("toolId", args.toolId))
-      .filter((q) => q.eq(q.field("status"), "approved"))
-      .first();
-
-    if (activeLoan) {
-      throw new ConvexError({
-        code: "CONFLICT",
-        message: "Cannot delete a tool while it is actively on loan. Mark it returned first.",
-      });
+      .withIndex("by_tool", (q) => q.eq("toolId", args.toolId))) {
+      if (loan.status === "approved") {
+        throw new ConvexError({
+          code: "CONFLICT",
+          message:
+            "Cannot delete a tool while it is actively on loan. Mark it returned first.",
+        });
+      }
+      if (loan.status === "pending") {
+        await ctx.db.patch(loan._id, {
+          status: "declined",
+          declinedAt: now,
+          updatedAt: now,
+        });
+      }
     }
 
     await ctx.db.delete(args.toolId);

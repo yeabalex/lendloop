@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { Sidebar } from "@/components/layout/sidebar";
+import { AppSyncGate } from "@/components/providers/app-sync-gate";
 
 async function AuthShell({ children }: { children: React.ReactNode }) {
   const { userId } = await auth();
@@ -12,7 +13,9 @@ async function AuthShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen flex-1">
       <Sidebar />
-      <main className="flex-1 overflow-y-auto p-6 lg:p-8">{children}</main>
+      <main className="flex-1 overflow-y-auto p-6 lg:p-8">
+        <AppSyncGate>{children}</AppSyncGate>
+      </main>
     </div>
   );
 }

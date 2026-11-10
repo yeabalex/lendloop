@@ -2,7 +2,9 @@
 
 import { useQuery } from "convex/react";
 import { useState } from "react";
+import { BorrowModal } from "@/components/loans/borrow-modal";
 import { CategoryFilter } from "@/components/tools/category-filter";
+import type { ToolItem } from "@/components/tools/tool-card";
 import { ToolFormModal } from "@/components/tools/tool-form-modal";
 import { ToolList } from "@/components/tools/tool-list";
 import { useToolManager } from "@/components/tools/use-tool-manager";
@@ -13,6 +15,9 @@ export default function DashboardPage() {
   const [selectedCategory, setSelectedCategory] = useState<
     ToolCategory | "all"
   >("all");
+  const [borrowingTool, setBorrowingTool] = useState<ToolItem | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
   const {
     modalOpen,
     editingTool,
@@ -51,6 +56,19 @@ export default function DashboardPage() {
         </button>
       </div>
 
+      {notice && (
+        <div className="mb-4 flex items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-300">
+          <span>{notice}</span>
+          <button
+            type="button"
+            onClick={() => setNotice(null)}
+            className="ml-3 cursor-pointer text-xs opacity-70 hover:opacity-100"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
       {feedback && (
         <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300">
           {feedback}
@@ -72,12 +90,23 @@ export default function DashboardPage() {
         }
         onEdit={openEdit}
         onDelete={handleDelete}
+        onBorrow={(tool) => setBorrowingTool(tool)}
       />
 
       <ToolFormModal
         isOpen={modalOpen}
         onClose={closeModal}
         initialTool={editingTool}
+      />
+
+      <BorrowModal
+        tool={borrowingTool}
+        onClose={() => setBorrowingTool(null)}
+        onSuccess={(toolName) =>
+          setNotice(
+            `Borrow request sent for "${toolName}". Track its status under My Requests.`
+          )
+        }
       />
     </div>
   );
