@@ -32,6 +32,48 @@ const EVENT_LABELS: Record<
   "loan.overdue_reminder": "Overdue reminder",
 };
 
+export const getLogsForLoan = internalQuery({
+  args: { loanId: v.id("loans") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("automationLogs")
+      .withIndex("by_loan", (q) => q.eq("loanId", args.loanId))
+      .collect();
+  },
+});
+
+/**
+ * Test helper: Seeds a sample overdue loan to test the full lifecycle,
+ * n8n overdue reminder workflow, and recent activity timeline.
+ */
+export const createTestOverdueLoan = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const user = await ctx.db.query("users").first();
+    const tool = await ctx.db.query("tools").first();
+    if (!user || !tool) {
+      throw new Error("Cannot seed test loan: requires at least 1 user and 1 tool in database.");
+    }
+
+    const now = Date.now();
+    const dayMs = 24 * 60 * 60 * 1000;
+
+    const loanId = await ctx.db.insert("loans", {
+      toolId: tool._id,
+      borrowerId: user._id,
+      lenderId: user._id,
+      startDate: now - 5 * dayMs,
+      endDate: now - 2 * dayMs, // 2 days overdue!
+      status: "approved",
+      reminderCount: 0,
+      createdAt: now - 6 * dayMs,
+      updatedAt: now,
+    });
+
+    return loanId;
+  },
+});
+
 /**
  * Records an automation dispatch or n8n write-back in `automationLogs` idempotently.
  * If `idempotencyKey` already exists, returns early without creating duplicate logs or updating reminder counts.
