@@ -31,23 +31,20 @@ export const listPublic = query({
  */
 export const listAll = query({
   args: {
-    category: v.optional(v.string()),
+    category: v.optional(v.union(v.literal("all"), toolCategoryValidator)),
   },
   handler: async (ctx, args) => {
     const currentUser = await getCurrentUser(ctx);
 
-    let toolsQuery;
-    if (args.category && args.category !== "all") {
-      toolsQuery = ctx.db
-        .query("tools")
-        .withIndex("by_category", (q) =>
-          q.eq("category", args.category as any)
-        );
-    } else {
-      toolsQuery = ctx.db.query("tools");
-    }
-
-    const tools = await toolsQuery.order("desc").collect();
+    const selectedCategory = args.category;
+    const tools =
+      selectedCategory && selectedCategory !== "all"
+        ? await ctx.db
+            .query("tools")
+            .withIndex("by_category", (q) => q.eq("category", selectedCategory))
+            .order("desc")
+            .collect()
+        : await ctx.db.query("tools").order("desc").collect();
 
     // Enrich with owner profile details
     return await Promise.all(
@@ -244,3 +241,4 @@ export const remove = mutation({
     return args.toolId;
   },
 });
+

@@ -1,14 +1,10 @@
 "use client";
 
-const CATEGORIES = [
+import { TOOL_CATEGORIES } from "@/lib/constants";
+
+const FILTER_OPTIONS = [
   { id: "all", label: "All Categories" },
-  { id: "power_tools", label: "Power Tools" },
-  { id: "garden", label: "Garden" },
-  { id: "kitchen", label: "Kitchen" },
-  { id: "camping", label: "Camping" },
-  { id: "automotive", label: "Automotive" },
-  { id: "cleaning", label: "Cleaning" },
-  { id: "other", label: "Other" },
+  ...TOOL_CATEGORIES,
 ];
 
 export function CategoryFilter({
@@ -20,7 +16,7 @@ export function CategoryFilter({
 }) {
   return (
     <div className="mb-6 flex flex-wrap gap-2">
-      {CATEGORIES.map((cat) => {
+      {FILTER_OPTIONS.map((cat) => {
         const isActive = selected === cat.id;
         return (
           <button
@@ -40,4 +36,3 @@ export function CategoryFilter({
     </div>
   );
 }
-

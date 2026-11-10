@@ -1,31 +1,34 @@
-import { SignInButton } from "@clerk/nextjs";
-import { ToolList } from "@/components/tools/tool-list";
+import {
+  PublicHeroCta,
+  PublicToolBoard,
+} from "@/components/tools/public-tool-board";
 
 export default function LandingPage() {
   return (
     <div className="mx-auto max-w-5xl px-6 py-20">
       {/* Hero */}
       <section className="mb-16 text-center">
-        <h1 className="text-5xl font-bold tracking-tight">LendLoop</h1>
-        <p className="mt-4 text-xl text-zinc-500">
-          Borrow what you need. Lend what you don't.
+        <h1 className="text-5xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+          LendLoop
+        </h1>
+        <p className="mt-4 text-xl text-zinc-500 dark:text-zinc-400">
+          Borrow what you need. Lend what you don&apos;t.
         </p>
-        <div className="mt-8">
-          <SignInButton mode="modal">
-            <button className="rounded-full bg-zinc-900 px-8 py-3 text-white hover:bg-zinc-700 transition-colors">
-              Sign in to lend or borrow
-            </button>
-          </SignInButton>
-        </div>
+        <PublicHeroCta />
       </section>
 
-      {/* Read-only tool list */}
+      {/* Read-only available tools (name & category only, no owner details) */}
       <section>
-        <h2 className="mb-6 text-2xl font-semibold">Available Tools</h2>
-        {/* TODO: pass Convex data once wired */}
-        <ToolList publicView />
+        <div className="mb-6 flex items-baseline justify-between">
+          <h2 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
+            Available Tools
+          </h2>
+          <span className="text-xs text-zinc-500 dark:text-zinc-400">
+            Read-only preview · Sign in for details &amp; borrowing
+          </span>
+        </div>
+        <PublicToolBoard />
       </section>
     </div>
   );
 }
-

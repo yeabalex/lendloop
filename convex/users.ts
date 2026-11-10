@@ -1,6 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { getCurrentUser, requireAdmin, requireUser } from "./lib/auth";
+import { getCurrentUser, requireAdmin } from "./lib/auth";
 import { userRoleValidator } from "./schema";
 
 /**
