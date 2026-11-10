@@ -19,7 +19,11 @@ export const metadata: Metadata = {
   description: "Borrow what you need. Lend what you don't.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html
       lang="en"

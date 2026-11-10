@@ -1,8 +1,7 @@
 "use client";
 
 import {
-  SignedIn,
-  SignedOut,
+  Show,
   SignInButton,
   UserButton,
 } from "@clerk/nextjs";
@@ -22,7 +21,7 @@ export function Navbar() {
         </Link>
 
         <div className="flex items-center gap-3">
-          <SignedOut>
+          <Show when="signed-out">
             <SignInButton mode="modal">
               <button
                 type="button"
@@ -31,9 +30,9 @@ export function Navbar() {
                 Sign in to lend or borrow
               </button>
             </SignInButton>
-          </SignedOut>
+          </Show>
 
-          <SignedIn>
+          <Show when="signed-in">
             <Link
               href="/dashboard"
               className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-500"
@@ -41,7 +40,7 @@ export function Navbar() {
               Open Board
             </Link>
             <UserButton />
-          </SignedIn>
+          </Show>
         </div>
       </div>
     </header>

@@ -40,3 +40,4 @@ export function CategoryFilter({
     </div>
   );
 }
+

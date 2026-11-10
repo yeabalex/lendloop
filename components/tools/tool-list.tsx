@@ -9,3 +9,4 @@ export function ToolList({ publicView = false }: { publicView?: boolean }) {
     </div>
   );
 }
+
