@@ -1,0 +1,47 @@
+{
+  "name": "LendLoop — Error Handler",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "a7f3c810-1b2a-4c3d-9e4f-100000000001",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst formatted = [];\n\nfor (const item of items) {\n  const execution = item.json.execution || {};\n  const workflow = item.json.workflow || {};\n  const error = execution.error || {};\n\n  const alert = {\n    severity: 'ERROR',\n    service: 'LendLoop n8n Automation',\n    workflowId: workflow.id || 'unknown',\n    workflowName: workflow.name || 'Unknown Workflow',\n    executionId: execution.id || 'unknown',\n    executionUrl: execution.url || '',\n    failedNode: execution.lastNodeExecuted || 'unknown',\n    errorMessage: error.message || 'Unknown error occurred',\n    timestamp: new Date().toISOString(),\n  };\n\n  console.error('[LendLoop Error Handler]', JSON.stringify(alert));\n  formatted.push({ json: alert });\n}\n\nreturn formatted;"
+      },
+      "id": "a7f3c810-1b2a-4c3d-9e4f-100000000002",
+      "name": "Format & Log Failure",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 300]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Format & Log Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "00000000-0000-4000-8000-000000000001",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": []
+}
+

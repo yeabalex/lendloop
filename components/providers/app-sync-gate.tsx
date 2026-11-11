@@ -21,3 +21,4 @@ export function AppSyncGate({ children }: { children: ReactNode }) {
 
   return <>{children}</>;
 }
+
